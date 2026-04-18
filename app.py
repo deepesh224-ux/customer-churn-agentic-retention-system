@@ -12,10 +12,62 @@ from src.inference import (
 
 
 st.set_page_config(
-    page_title="Customer Retention System",
-    page_icon="",
-    layout="wide"
+    page_title="OUTLIER.AI | The Churn Prediction System",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
+
+def inject_hyper_ai_css():
+    st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Outfit:wght@200;400;600&display=swap');
+
+        :root {
+            --bg-deep: #050505;
+            --accent-emerald: #00ff9f;
+            --accent-amber: #ffb400;
+            --accent-violet: #8b5cf6;
+            --glass-white: rgba(255, 255, 255, 0.03);
+            --border-glow: rgba(0, 255, 159, 0.15);
+            --font-main: 'Outfit', sans-serif;
+            --font-hdr: 'Space Grotesk', sans-serif;
+        }
+
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stApp {
+            background-color: var(--bg-deep);
+            background-image: 
+                linear-gradient(rgba(0, 255, 159, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 159, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            color: #ffffff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-emerald);
+            border-radius: 10px;
+        }
+
+        html, body, [class*="css"] {
+            font-family: var(--font-main);
+        }
+        
+        h1, h2, h3, .app-name {
+            font-family: var(--font-hdr);
+            letter-spacing: -0.01em;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
 
 
 model = load_rf_model()
