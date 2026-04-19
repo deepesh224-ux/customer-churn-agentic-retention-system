@@ -1,7 +1,9 @@
 import streamlit as st
 import pandas as pd
 import os
+import time
 from src.preprocessing import preprocess_user_query
+from src.retention_agent import run_retention_flow
 from src.inference import (
     load_rf_model, 
     random_forest_inference, 
@@ -231,10 +233,40 @@ def render_neural_metrics():
     """, unsafe_allow_html=True)
 
 inject_hyper_ai_css()
+def display_nexus_results(prediction, probability, cluster_id, cluster_desc):
+    st.markdown('<div class="nexus-card reveal">', unsafe_allow_html=True)
+    col1, col2 = st.columns([1.5, 1])
+    
+    with col1:
+        st.markdown('<div class="metric-label">Neural Probability Index</div>', unsafe_allow_html=True)
+        accent_color = "var(--accent-emerald)" if prediction == 0 else "var(--accent-amber)"
+        status_text = "MAINTAIN ENGAGEMENT" if prediction == 0 else "INTERVENE IMMEDIATELY"
+        
+        st.markdown(f'<div class="metric-value" style="color: {accent_color};">{probability:.1%}</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="margin-top: 2rem; border-left: 2px solid {accent_color}; padding-left: 1rem;">
+                <div style="color: {accent_color}; font-weight: 700; letter-spacing: 2px;">{status_text}</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-top: 0.5rem;">
+                    Model confidence high. Anomalous churn signatures detected in behavioral clusters.
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+            <div style="padding: 1rem; background: rgba(255,255,255,0.02); height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                <div class="metric-label" style="margin-bottom: 1rem;">Target Archetype</div>
+                <div style="font-size: 1.2rem; font-weight: 600; color: #fff;">SEGMENT_{cluster_id}</div>
+                <div style="color: rgba(255,255,255,0.4); font-style: italic; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                    {cluster_desc}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+inject_hyper_ai_css()
 render_nexus_header()
 render_neural_metrics()
-
-
 
 model = load_rf_model()
 
@@ -302,30 +334,31 @@ else:
         submit = st.form_submit_button("INFER CHURN VECTOR")
 
     if submit:
-        # Construct raw input from form values
         raw_input = {
-            'gender': gender,
-            'SeniorCitizen': senior_citizen,
-            'Partner': partner,
-            'Dependents': dependents,
-            'tenure': tenure,
-            'PhoneService': phone_service,
-            'MultipleLines': multiple_lines,
-            'InternetService': internet_service,
-            'OnlineSecurity': online_security,
-            'OnlineBackup': online_backup,
-            'DeviceProtection': device_protection,
-            'TechSupport': tech_support,
-            'StreamingTV': streaming_tv,
-            'StreamingMovies': streaming_movies,
-            'Contract': contract,
-            'PaperlessBilling': paperless_billing,
-            'PaymentMethod': payment_method,
-            'MonthlyCharges': monthly_charges,
+            'gender': gender, 'SeniorCitizen': senior_citizen, 'Partner': partner, 
+            'Dependents': dependents, 'tenure': tenure, 'PhoneService': phone_service,
+            'MultipleLines': multiple_lines, 'InternetService': internet_service,
+            'OnlineSecurity': online_security, 'OnlineBackup': online_backup,
+            'DeviceProtection': device_protection, 'TechSupport': tech_support,
+            'StreamingTV': streaming_tv, 'StreamingMovies': streaming_movies,
+            'Contract': contract, 'PaperlessBilling': paperless_billing,
+            'PaymentMethod': payment_method, 'MonthlyCharges': monthly_charges,
             'TotalCharges': str(total_charges)
         }
         
-        # Preprocess and Infer
+        # Ingestion Animation
+        with st.empty():
+            for i in range(1, 101, 8):
+                st.markdown(f"""
+                    <div style='padding: 4rem; text-align: center; background: rgba(0,255,159,0.02); border: 1px dashed var(--accent-emerald);'>
+                        <div style='color: var(--accent-emerald); font-family: var(--font-hdr); letter-spacing: 0.5em; font-size: 0.8rem;'>
+                            NEURAL SYNTHESIS IN PROGRESS // {i}%
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                time.sleep(0.04)
+            st.empty()
+
         processed_sample = preprocess_user_query(raw_input, training_features)
         prediction, probability = random_forest_inference(processed_sample)
         cluster_id, cluster_desc = identify_user_cluster(processed_sample)
@@ -344,28 +377,26 @@ else:
     if st.session_state.prediction_results:
         res = st.session_state.prediction_results
         
-        st.divider()
-        col_res1, col_res2 = st.columns([1, 1])
-        
-        with col_res1:
-            st.subheader("Prediction Result")
-            display_prediction_results(res['prediction'], res['probability'])
+        # Use Upstream's nexus results display
+        display_nexus_results(res['prediction'], res['probability'], res['cluster_id'], res['cluster_desc'])
 
-        with col_res2:
-            st.subheader("Customer Archetype")
-            st.info(f"**Group {res['cluster_id']}**: {res['cluster_desc']}")
-
-        st.divider()
-        st.subheader("Risk Factor Analysis")
-        st.markdown("This chart shows which factors contributed most to the prediction. Red bars increase churn risk, blue bars decrease it.")
+        st.markdown('<div class="nexus-card reveal">', unsafe_allow_html=True)
+        st.markdown('<div class="metric-label" style="margin-bottom: 2rem;">Feature Influence Matrix</div>', unsafe_allow_html=True)
         
-        with st.spinner("Generating explanation..."):
+        with st.spinner("Decoding heuristic pathways..."):
             fig = rf_feature_contribution_to_churn(res['processed_sample'])
+            fig.patch.set_facecolor('#050505')
+            for ax in fig.get_axes():
+                ax.set_facecolor('#050505')
+                ax.tick_params(colors='#ffffff')
+                ax.xaxis.label.set_color('#ffffff')
+                ax.yaxis.label.set_color('#ffffff')
+                ax.title.set_color('#ffffff')
             st.pyplot(fig)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        with st.expander("Show Technical Details"):
-            st.write("Processed Input Vector:")
-            st.dataframe(res['processed_sample'])
+        with st.expander("DEEP_DATA_INSPECTION"):
+             st.code(str(res['processed_sample'].to_dict()), language='json')
 
         # ---------------------------------------------------------
         # AGENTIC RETENTION LAYER
@@ -373,53 +404,59 @@ else:
         st.divider()
         st.subheader("⚡ Agentic Retention Assistant")
         
-        if st.button("RUN RETENTION AGENT"):
-            agent = RetentionAgent()
-            
-            with st.status("Agent reasoning in progress...", expanded=True) as status:
-                # Get actual top factors from SHAP
-                factors = get_top_contributors(res['processed_sample'])
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("RUN ADVANCED RETENTION AGENT"):
+                agent = RetentionAgent()
                 
-                # Run the workflow
-                report = agent.run_agentic_workflow(res['raw_input'], res['probability'], factors)
-                
-                for step in report['reasoning_log']:
-                    st.write(f"🔍 {step}")
-                    import time
-                    time.sleep(0.5)
-                
-                status.update(label="Strategy successfully generated!", state="complete", expanded=False)
+                with st.status("Agent reasoning in progress...", expanded=True) as status:
+                    # Get actual top factors from SHAP
+                    factors = get_top_contributors(res['processed_sample'])
+                    
+                    # Run the workflow
+                    report = agent.run_agentic_workflow(res['raw_input'], res['probability'], factors)
+                    
+                    for step in report['reasoning_log']:
+                        st.write(f"🔍 {step}")
+                        time.sleep(0.5)
+                    
+                    status.update(label="Strategy successfully generated!", state="complete", expanded=False)
 
-            # Display Structured Report
-            st.markdown(f"""
-            <div class="nexus-card reveal">
-                <h3 style="color: var(--accent-emerald); border-bottom: 1px solid var(--accent-emerald); padding-bottom: 10px;">RETENTION STRATEGY REPORT</h3>
-                <p><b>Risk Level:</b> {report['summary']['risk_level']} ({report['summary']['probability']})</p>
-                <p><b>Target Segment:</b> {report['summary']['customer_segment']}</p>
-                <div style="margin: 20px 0;">
-                    <b style="color: var(--accent-amber);">Primary Risk Factors:</b>
-                    <ul>
-                        {"".join([f"<li>{f}</li>" for f in report['contributing_factors']])}
-                    </ul>
+                # Display Structured Report
+                st.markdown(f"""
+                <div class="nexus-card reveal">
+                    <h3 style="color: var(--accent-emerald); border-bottom: 1px solid var(--accent-emerald); padding-bottom: 10px;">RETENTION STRATEGY REPORT</h3>
+                    <p><b>Risk Level:</b> {report['summary']['risk_level']} ({report['summary']['probability']})</p>
+                    <p><b>Target Segment:</b> {report['summary']['customer_segment']}</p>
+                    <div style="margin: 20px 0;">
+                        <b style="color: var(--accent-amber);">Primary Risk Factors:</b>
+                        <ul>
+                            {"".join([f"<li>{f}</li>" for f in report['contributing_factors']])}
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.markdown("### 🛠 Recommended Actions")
-                for action in report['recommended_actions']:
-                    with st.expander(f"**{action['action']}**"):
-                        st.write(f"**Benefit:** {action['benefit']}")
-                        st.caption(f"Source: {action['reference']}")
-            
-            with col_b:
-                st.markdown("### 📄 Disclaimers & Ethics")
-                st.warning(report['disclaimers']['business'])
-                st.info(report['disclaimers']['ethical'])
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.markdown("### 🛠 Recommended Actions")
+                    for action in report['recommended_actions']:
+                        with st.expander(f"**{action['action']}**"):
+                            st.write(f"**Benefit:** {action['benefit']}")
+                            st.caption(f"Source: {action['reference']}")
                 
-                st.markdown("### 📚 Supporting References")
-                for ref in report['references']:
-                    st.markdown(f"- *{ref}*")
-
-
+                with col_b:
+                    st.markdown("### 📄 Disclaimers & Ethics")
+                    st.warning(report['disclaimers']['business'])
+                    st.info(report['disclaimers']['ethical'])
+                    
+                    st.markdown("### 📚 Supporting References")
+                    for ref in report['references']:
+                        st.markdown(f"- *{ref}*")
+        
+        with col_btn2:
+             if st.button("RUN LEGACY RETENTION FLOW"):
+                with st.spinner("Agent analyzing customer data and playbooks..."):
+                    strategy = run_retention_flow("CUST_001", res['processed_sample'], model)
+                    st.subheader("AI Recommended Action")
+                    st.write(strategy)
