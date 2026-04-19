@@ -1,16 +1,21 @@
-# Customer Churn Prediction and Agentic Retention Strategy System
+# 📉 Customer Churn Prediction & Retention System
 
-## Project Overview
-This repository contains an end-to-end artificial intelligence system designed to identify at-risk customers and generate structured, data-driven retention strategies. The project is divided into two primary phases: a machine learning pipeline for churn classification and an agentic AI assistant for personalized intervention planning.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-orange)](https://scikit-learn.org/)
+[![Status: In-Development](https://img.shields.io/badge/Status-In--Development-green.svg)]()
 
-## Milestone 1: Data Preprocessing & Pipeline
-The current phase focuses on building a robust automated data pipeline that transforms raw customer data into a machine-learning-ready format.
+This repository contains a data-driven system designed to identify customers at risk of leaving (churning) and provide actionable insights for retention. Currently, the project focuses on high-accuracy predictive modeling, with an **Agentic AI** layer planned for automated outreach.
 
-### Key Features
-* **Automated Ingestion:** Uses `kagglehub` to fetch the latest Telco Churn dataset directly.
-* **Data Cleaning:** Handles missing values in `TotalCharges` and removes non-predictive features like `customerID`.
-* **Feature Engineering:** Implements Binary Encoding and One-Hot Encoding for categorical variables.
-* **High-Performance Export:** Saves processed data in **Parquet** format to preserve data types and optimize speed.
+## Project Goals
+1. **Analyze:** Perform deep Exploratory Data Analysis (EDA) to find churn drivers.
+2. **Predict:** Build a robust Machine Learning pipeline to classify churn risk.
+3. **Automate (Future):** Implement an Agentic workflow to draft personalized retention offers.
+
+## Tech Stack
+- **Data Handling:** `Pandas`, `NumPy`
+- **Visualization:** `Matplotlib`, `Seaborn`
+- **Machine Learning:** `Scikit-Learn`, `RandomForest`, `K-means`
+- **Inference & Agentic UI:** `Streamlit`, `Shap`, `KaggleHub`
 
 ## Milestone 2: Model Training, Evaluation & Retention Placeholder
 
@@ -22,6 +27,21 @@ The second phase introduces a formal training pipeline, robust evaluation, and t
 * **Retention Automation Layer (`src/retention_automation.py`):** A modular placeholder for the upcoming agentic strategy engine, including placeholder logic for personalized outreach.
 * **Comprehensive Testing:** Unit tests for both preprocessing cleaning steps and the retention module.
 
+## Project Structure
+```text
+├── data/               # Raw and processed datasets
+├── models/             # Saved model artifacts (.pkl) and results
+├── notebooks/          # EDA and experiment notebooks
+├── src/                # Source code
+│   ├── preprocessing.py # Data cleaning and engineering
+│   ├── train.py         # Robust training script
+│   ├── inference.py     # SHAP explanations & prediction logic
+│   └── retention_automation.py # Agentic placeholder
+├── tests/              # Unit tests for core modules
+├── app.py              # Streamlit dashboard
+├── requirements.txt    # Project dependencies
+└── README.md
+```
 ---
 
 ##  Setup & Installation
