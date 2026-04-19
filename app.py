@@ -8,8 +8,11 @@ from src.inference import (
     load_rf_model, 
     random_forest_inference, 
     identify_user_cluster, 
-    rf_feature_contribution_to_churn
+    rf_feature_contribution_to_churn,
+    display_prediction_results,
+    get_top_contributors
 )
+from src.retention_automation import RetentionAgent
 
 
 st.set_page_config(
@@ -206,6 +209,10 @@ def inject_hyper_ai_css():
     
     """, unsafe_allow_html=True)
 
+# Initialize Session State
+if 'prediction_results' not in st.session_state:
+    st.session_state.prediction_results = None
+
 def render_nexus_header():
     st.markdown("""
         <div class="nexus-header reveal">
@@ -323,6 +330,7 @@ else:
             monthly_charges = st.number_input("Flux [Monthly]", min_value=0.0, value=50.0)
             total_charges = st.number_input("Flux [Cumulative]", min_value=0.0, value=50.0)
 
+        # Handle form submission
         submit = st.form_submit_button("INFER CHURN VECTOR")
 
     if submit:
@@ -338,6 +346,7 @@ else:
             'TotalCharges': str(total_charges)
         }
         
+        # Ingestion Animation
         with st.empty():
             for i in range(1, 101, 8):
                 st.markdown(f"""
@@ -349,20 +358,33 @@ else:
                 """, unsafe_allow_html=True)
                 time.sleep(0.04)
             st.empty()
-        
+
         processed_sample = preprocess_user_query(raw_input, training_features)
         prediction, probability = random_forest_inference(processed_sample)
         cluster_id, cluster_desc = identify_user_cluster(processed_sample)
         
-        display_nexus_results(prediction, probability, cluster_id, cluster_desc)
+        # Save results to session state to ensure they survive the "Retention Agent" button click
+        st.session_state.prediction_results = {
+            "raw_input": raw_input,
+            "processed_sample": processed_sample,
+            "prediction": prediction,
+            "probability": probability,
+            "cluster_id": cluster_id,
+            "cluster_desc": cluster_desc
+        }
 
-        st.session_state["processed_df"] = processed_sample
+    # Render results and Agentic Layer if prediction data exists in state
+    if st.session_state.prediction_results:
+        res = st.session_state.prediction_results
+        
+        # Use Upstream's nexus results display
+        display_nexus_results(res['prediction'], res['probability'], res['cluster_id'], res['cluster_desc'])
 
         st.markdown('<div class="nexus-card reveal">', unsafe_allow_html=True)
         st.markdown('<div class="metric-label" style="margin-bottom: 2rem;">Feature Influence Matrix</div>', unsafe_allow_html=True)
         
         with st.spinner("Decoding heuristic pathways..."):
-            fig = rf_feature_contribution_to_churn(processed_sample)
+            fig = rf_feature_contribution_to_churn(res['processed_sample'])
             fig.patch.set_facecolor('#050505')
             for ax in fig.get_axes():
                 ax.set_facecolor('#050505')
@@ -370,18 +392,71 @@ else:
                 ax.xaxis.label.set_color('#ffffff')
                 ax.yaxis.label.set_color('#ffffff')
                 ax.title.set_color('#ffffff')
-
             st.pyplot(fig)
         st.markdown('</div>', unsafe_allow_html=True)
         
         with st.expander("DEEP_DATA_INSPECTION"):
-            st.code(str(processed_sample.to_dict()), language='json')
-            
-    if "processed_df" in st.session_state:
+             st.code(str(res['processed_sample'].to_dict()), language='json')
+
+        # ---------------------------------------------------------
+        # AGENTIC RETENTION LAYER
+        # ---------------------------------------------------------
         st.divider()
-        st.subheader("Agentic Retention Options")
-        if st.button("Generate AI Retention Strategy"):
-            with st.spinner("Agent analyzing customer data and playbooks..."):
-                strategy = run_retention_flow("CUST_001", st.session_state["processed_df"], model)
-                st.subheader("AI Recommended Action")
-                st.write(strategy)
+        st.subheader("⚡ Agentic Retention Assistant")
+        
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("RUN ADVANCED RETENTION AGENT"):
+                agent = RetentionAgent()
+                
+                with st.status("Agent reasoning in progress...", expanded=True) as status:
+                    # Get actual top factors from SHAP
+                    factors = get_top_contributors(res['processed_sample'])
+                    
+                    # Run the workflow
+                    report = agent.run_agentic_workflow(res['raw_input'], res['probability'], factors)
+                    
+                    for step in report['reasoning_log']:
+                        st.write(f"🔍 {step}")
+                        time.sleep(0.5)
+                    
+                    status.update(label="Strategy successfully generated!", state="complete", expanded=False)
+
+                # Display Structured Report
+                st.markdown(f"""
+                <div class="nexus-card reveal">
+                    <h3 style="color: var(--accent-emerald); border-bottom: 1px solid var(--accent-emerald); padding-bottom: 10px;">RETENTION STRATEGY REPORT</h3>
+                    <p><b>Risk Level:</b> {report['summary']['risk_level']} ({report['summary']['probability']})</p>
+                    <p><b>Target Segment:</b> {report['summary']['customer_segment']}</p>
+                    <div style="margin: 20px 0;">
+                        <b style="color: var(--accent-amber);">Primary Risk Factors:</b>
+                        <ul>
+                            {"".join([f"<li>{f}</li>" for f in report['contributing_factors']])}
+                        </ul>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.markdown("### 🛠 Recommended Actions")
+                    for action in report['recommended_actions']:
+                        with st.expander(f"**{action['action']}**"):
+                            st.write(f"**Benefit:** {action['benefit']}")
+                            st.caption(f"Source: {action['reference']}")
+                
+                with col_b:
+                    st.markdown("### 📄 Disclaimers & Ethics")
+                    st.warning(report['disclaimers']['business'])
+                    st.info(report['disclaimers']['ethical'])
+                    
+                    st.markdown("### 📚 Supporting References")
+                    for ref in report['references']:
+                        st.markdown(f"- *{ref}*")
+        
+        with col_btn2:
+             if st.button("RUN LEGACY RETENTION FLOW"):
+                with st.spinner("Agent analyzing customer data and playbooks..."):
+                    strategy = run_retention_flow("CUST_001", res['processed_sample'], model)
+                    st.subheader("AI Recommended Action")
+                    st.write(strategy)
