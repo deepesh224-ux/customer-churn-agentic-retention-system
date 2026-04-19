@@ -232,60 +232,67 @@ render_neural_metrics()
 
 model = load_rf_model()
 
-
-st.title(" Customer Churn Prediction System")
-st.markdown("""
-Input customer details below to predict the likelihood of churn. 
-This system uses a **Random Forest Classifier** trained on historical telecom data.
-""")
-
 if model is None:
-    st.error("Model file not found at `models/rf_model.pkl`. Please ensure the model is trained and saved.")
+    st.error("CORE SYSTEMS OFFLINE. MODEL PKL NOT FOUND.")
 else:
     training_features = model.feature_names_in_
 
-    with st.form("customer_form"):
-        st.subheader("Customer Demographics & Services")
-        col1, col2, col3 = st.columns(3)
+    st.markdown("""
+        <div class="nexus-card reveal" style="height: 120px; display: flex; align-items: center; justify-content: center; gap: 2rem; overflow: hidden; animation-delay: 0.2s;">
+            <div class="metric-label" style="flex-shrink: 0;">NEURAL_PULSE: ACTIVE</div>
+            <div style="flex-grow: 1; display: flex; gap: 4px; align-items: center;">
+                <div class="line" style="height: 10px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.1s;"></div>
+                <div class="line" style="height: 20px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.2s;"></div>
+                <div class="line" style="height: 15px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.3s;"></div>
+                <div class="line" style="height: 40px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.4s;"></div>
+                <div class="line" style="height: 25px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.5s;"></div>
+                <div class="line" style="height: 50px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.6s;"></div>
+                <div class="line" style="height: 15px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.7s;"></div>
+                <div class="line" style="height: 30px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.8s;"></div>
+                <div class="line" style="height: 10px; width: 3px; background: var(--accent-emerald); animation: pulse 1s infinite alternate-reverse 0.9s;"></div>
+            </div>
+            <div class="metric-label" style="flex-shrink: 0; color: var(--accent-amber);">NODE_STABILITY: 99.8%</div>
+        </div>
+    """, unsafe_allow_html=True)
+    with st.form("nexus_form"):
+        st.markdown('<div class="metric-label" style="margin-bottom: 2rem;">Data Ingestion Portal</div>', unsafe_allow_html=True)
         
+        col1, col2, col3 = st.columns(3)
         with col1:
-            gender = st.selectbox("Gender", ["Female", "Male"])
-            senior_citizen = st.selectbox("Senior Citizen", [0, 1])
-            partner = st.selectbox("Partner", ["Yes", "No"])
-            dependents = st.selectbox("Dependents", ["Yes", "No"])
+            gender = st.selectbox("Bio Data [Gender]", ["Female", "Male"])
+            senior_citizen = st.selectbox("Status [Senior]", [0, 1])
+            partner = st.selectbox("Relational [Partner]", ["Yes", "No"])
+            dependents = st.selectbox("Relational [Dependents]", ["Yes", "No"])
             
         with col2:
-            tenure = st.slider("Tenure (Months)", 0, 72, 12)
-            phone_service = st.selectbox("Phone Service", ["Yes", "No"])
-            multiple_lines = st.selectbox("Multiple Lines", ["No", "Yes", "No phone service"])
-            internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+            tenure = st.slider("Longevity [Months]", 0, 72, 12)
+            phone_service = st.selectbox("Tier [Phone]", ["Yes", "No"])
+            multiple_lines = st.selectbox("Config [Lines]", ["No", "Yes", "No phone service"])
+            internet_service = st.selectbox("Network [Protocol]", ["DSL", "Fiber optic", "No"])
 
         with col3:
-            online_security = st.selectbox("Online Security", ["No", "Yes", "No internet service"])
-            online_backup = st.selectbox("Online Backup", ["No", "Yes", "No internet service"])
-            device_protection = st.selectbox("Device Protection", ["No", "Yes", "No internet service"])
-            tech_support = st.selectbox("Tech Support", ["No", "Yes", "No internet service"])
+            online_security = st.selectbox("Armor [Security]", ["No", "Yes", "No internet service"])
+            online_backup = st.selectbox("Vault [Backup]", ["No", "Yes", "No internet service"])
+            device_protection = st.selectbox("Armor [Device]", ["No", "Yes", "No internet service"])
+            tech_support = st.selectbox("Armor [Support]", ["No", "Yes", "No internet service"])
 
-        st.divider()
-        st.subheader("Contract & Billing")
-        col4, col5, col6 = st.columns(3)
+        st.markdown('<div style="height: 40px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 40px;"></div>', unsafe_allow_html=True)
         
+        col4, col5, col6 = st.columns(3)
         with col4:
-            streaming_tv = st.selectbox("Streaming TV", ["No", "Yes", "No internet service"])
-            streaming_movies = st.selectbox("Streaming Movies", ["No", "Yes", "No internet service"])
-
+            streaming_tv = st.selectbox("Media [TV]", ["No", "Yes", "No internet service"])
+            streaming_movies = st.selectbox("Media [Cinema]", ["No", "Yes", "No internet service"])
         with col5:
-            contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-            paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
-
+            contract = st.selectbox("Nexus [Contract]", ["Month-to-month", "One year", "Two year"])
+            paperless_billing = st.selectbox("Nexus [Invoice]", ["Yes", "No"])
         with col6:
-            payment_method = st.selectbox("Payment Method", [
+            payment_method = st.selectbox("Nexus [Portal]", [
                 "Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"
             ])
-            monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0, value=50.0)
-            total_charges = st.number_input("Total Charges ($)", min_value=0.0, value=50.0)
+            monthly_charges = st.number_input("Flux [Monthly]", min_value=0.0, value=50.0)
+            total_charges = st.number_input("Flux [Cumulative]", min_value=0.0, value=50.0)
 
-        submit = st.form_submit_button("Predict Churn Risk")
+        submit = st.form_submit_button("INFER CHURN VECTOR")
 
     if submit:
 
